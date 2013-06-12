@@ -74,8 +74,15 @@ module Mail
         str = Encodings::QuotedPrintable.decode(string)
         str.force_encoding(pick_encoding(charset))
       end
-      decoded = str.encode("utf-8", :invalid => :replace, :replace => "")
+
+      begin
+        decoded = str.encode("utf-8", :invalid => :replace, :replace => "")
+      rescue Encoding::ConverterNotFoundError
+        decoded = str.encode("utf-16le", "utf-8", :invalid => :replace, :replace => "").encode("utf-8")
+      end
+
       decoded.valid_encoding? ? decoded : decoded.encode("utf-16le", :invalid => :replace, :replace => "").encode("utf-8")
+
     rescue Encoding::UndefinedConversionError
       str.dup.force_encoding("utf-8")
     end
@@ -139,7 +146,7 @@ module Mail
       else
         # if nothing found return the plain string but only if Encoding can handle it.
         # If not, fall back to ASCII.
-        begin 
+        begin
           Encoding.find(charset)
           charset
         rescue ArgumentError
