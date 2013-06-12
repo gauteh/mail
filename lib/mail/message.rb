@@ -2008,7 +2008,7 @@ module Mail
       raw_string = raw_source.to_s
       if match_data = raw_source.to_s.match(/\AFrom\s(#{TEXT}+)#{CRLF}/m)
         set_envelope(match_data[1])
-        self.raw_source = raw_string.sub(match_data[0], "") 
+        self.raw_source = raw_string.sub(match_data[0], "")
       end
     end
 
@@ -2142,7 +2142,12 @@ module Mail
         else
           if encoding = Encoding.find(charset) rescue nil
             body_text.force_encoding(encoding)
-            return body_text.encode(Encoding::UTF_8, :undef => :replace, :invalid => :replace, :replace => '')
+
+            begin
+              return body_text.encode(Encoding::UTF_8, :undef => :replace, :invalid => :replace, :replace => '')
+            rescue Encoding::ConverterNotFoundError
+              return body_text.encode("utf-16le", "utf-8", :undef => :replace, :invalid => :replace, :replace => '').encode("utf-8")
+            end
           end
         end
       end
